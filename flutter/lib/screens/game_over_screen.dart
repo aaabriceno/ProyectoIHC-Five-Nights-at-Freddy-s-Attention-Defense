@@ -26,6 +26,7 @@ class GameOverScreen extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
+                context.read<GameProvider>().reset();
                 context.read<ConnectionProvider>().disconnect();
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute<void>(builder: (_) => const SplashScreen()),

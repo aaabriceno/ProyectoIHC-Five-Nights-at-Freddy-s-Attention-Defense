@@ -61,4 +61,11 @@ class GameProvider extends ChangeNotifier {
     session.currentTask = null;
     notifyListeners();
   }
+
+  void reset() {
+    session = GameSession(playerId: session.playerId);
+    lastAttack = null;
+    isGameOver = false;
+    notifyListeners();
+  }
 }
