@@ -1,2 +1,16 @@
+# Archivos de contexto local para Claude Code (no se comparten en el repo)
 CLAUDE.md
 PROGRESS.md
+
+# Carpeta de trabajo interna de Claude Code (planes/ledgers de subagentes)
+.superpowers/
+
+# Secretos / configuración local (IP real del backend, tokens, etc.)
+.env
+.env.*
+*_local.dart
+**/server_config_local.dart
+
+# Configuración de editor personal
+.vscode/
+.fleet/
