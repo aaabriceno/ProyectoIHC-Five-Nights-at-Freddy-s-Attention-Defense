@@ -64,7 +64,8 @@ Nota: el README raíz del proyecto dice `tablet/` como nombre de carpeta; la car
 ## Convenciones de trabajo
 
 - Idioma de conversación con el usuario: español.
-- Commits/código: normal (sin modo caveman), en inglés o español según lo que ya use el repo — seguir el estilo de mensajes existentes.
+- Commits/código: normal (sin modo caveman). Mensajes de commit **siempre en castellano**.
+- **Nunca** agregar "Co-Authored-By: Claude" ni ningún trailer de coautoría de Claude/Anthropic en los commits.
 - Actualizar `PROGRESS.md` al completar cada tarea o sesión de trabajo relevante — no hace falta preguntar, hacerlo por defecto.
 - No inventar IP/puerto del servidor backend real — usar mocks (`MockServerService`, ver `flutter/lib/services/mock_server_service.dart`) hasta que el compañero de backend entregue el server real.
 - Protocolo JSON entre tablet y servidor debe respetar exactamente los mensajes definidos en `docs/FLUTTER_TABLET_ESPECIFICACION.md` sección "Protocolo de Comunicación" — cualquier cambio se coordina con el equipo, no se decide unilateralmente desde el lado Flutter.
