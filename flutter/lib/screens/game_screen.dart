@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/connection_provider.dart';
@@ -16,6 +18,13 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> {
   bool _wired = false;
+  StreamSubscription<Map<String, dynamic>>? _messageSubscription;
+
+  @override
+  void dispose() {
+    _messageSubscription?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +34,7 @@ class _GameScreenState extends State<GameScreen> {
     if (!_wired) {
       _wired = true;
       game.sendToServer = connection.sender;
-      connection.messages.listen(game.handleMessage);
+      _messageSubscription = connection.messages.listen(game.handleMessage);
     }
 
     if (game.isGameOver) {

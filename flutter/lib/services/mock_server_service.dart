@@ -60,6 +60,7 @@ class MockServerService {
   void stop() {
     _taskTimer?.cancel();
     _attackTimer?.cancel();
+    _taskCounter = 0;
   }
 
   void dispose() {
