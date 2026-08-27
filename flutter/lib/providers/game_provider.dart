@@ -37,7 +37,11 @@ class GameProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void reportTaskCompleted({required bool success, required double timeTaken}) {
+  void reportTaskCompleted({
+    required bool success,
+    required double timeTaken,
+    Map<String, dynamic>? taskData,
+  }) {
     if (session.currentTask == null) return;
     final Task task = session.currentTask!;
 
@@ -56,6 +60,7 @@ class GameProvider extends ChangeNotifier {
       'time_taken': timeTaken,
       'attempts': 1,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
+      if (taskData != null) 'task_data': taskData,
     });
 
     session.currentTask = null;

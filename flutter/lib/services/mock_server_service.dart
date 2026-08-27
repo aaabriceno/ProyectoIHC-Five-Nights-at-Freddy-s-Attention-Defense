@@ -16,7 +16,11 @@ class MockServerService {
 
   void start() {
     appLogger.i('MockServerService started');
-    _emitNextTask();
+    // Se retrasa la primera tarea porque este es un stream broadcast: si se
+    // emite de forma síncrona, se pierde para cualquier listener que se
+    // suscriba después (ej. GameScreen, que recién escucha un frame más
+    // tarde tras la navegación desde SplashScreen).
+    _taskTimer = Timer(const Duration(milliseconds: 300), _emitNextTask);
     _attackTimer = Timer.periodic(const Duration(seconds: 25), (_) {
       _emitAttack();
     });
