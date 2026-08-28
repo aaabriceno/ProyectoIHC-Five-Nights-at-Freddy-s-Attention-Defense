@@ -51,34 +51,34 @@ Se propone un nuevo `result` para `game_over` cuando se completa la Noche 5 exit
 ### `GameSession` (modificación)
 Se agregan dos campos:
 ```dart
-int currentNight;      // 1-5, default 1
-String inGameTime;     // "12:00 AM" default
+int nocheActual;      // 1-5, default 1
+String horaEnJuego;     // "12:00 AM" default
 ```
 
 ### `GameProvider` (modificación)
-- `handleMessage` gana un `case 'night_status':` que actualiza `session.currentNight` y `session.inGameTime`, y detecta si `night` subió respecto al valor anterior (para saber que se completó la noche anterior, útil para logging/UI, no bloqueante)
+- `handleMessage` gana un `case 'night_status':` que actualiza `session.nocheActual` y `session.horaEnJuego`, y detecta si `night` subió respecto al valor anterior (para saber que se completó la noche anterior, útil para logging/UI, no bloqueante)
 - `handleMessage` en el `case 'game_over':` lee el campo opcional `night` del mensaje y lo guarda para mostrarlo en la pantalla correspondiente
-- Nuevo campo `bool isFinalVictory` en `GameProvider`, se pone en `true` cuando `game_over.result == 'final_victory'`
+- Nuevo campo `bool esVictoriaFinal` en `GameProvider`, se pone en `true` cuando `game_over.result == 'final_victory'`
 
 ### Reintento por noche (cambio de comportamiento)
 - `GameProvider.reset()` actual reinicia TODO el estado (vida, tareas, noche) — esto se mantiene como el reset "duro" (usado al iniciar sesión desde cero)
-- Nuevo método `GameProvider.resetNight()`: reinicia vida a 100, `tasksCompleted`/`tasksFailed` a 0, `currentTask` a null, pero **mantiene** `currentNight` sin cambios
-- `GameOverScreen` usa `resetNight()` en el botón "Reintentar" cuando el fallo NO fue en la Noche 5 con victoria (es decir, siempre que sea un fallo por vida=0); solo un botón "Volver al menú" (si se agrega en el futuro) usaría el `reset()` duro
+- Nuevo método `GameProvider.reiniciarNoche()`: reinicia vida a 100, `tasksCompleted`/`tasksFailed` a 0, `currentTask` a null, pero **mantiene** `nocheActual` sin cambios
+- `GameOverScreen` usa `reiniciarNoche()` en el botón "Reintentar" cuando el fallo NO fue en la Noche 5 con victoria (es decir, siempre que sea un fallo por vida=0); solo un botón "Volver al menú" (si se agrega en el futuro) usaría el `reset()` duro
 
 ## UI
 
-### Nuevo widget: `NightClockBar`
+### Nuevo widget: `BarraRelojDeNoche`
 Reemplaza/complementa el `StatusBar` actual dentro de la barra superior de `GameScreen`. Muestra:
-- Texto "Noche {currentNight}/5"
-- Reloj "{inGameTime}"
+- Texto "Noche {nocheActual}/5"
+- Reloj "{horaEnJuego}"
 - Estilo visual simple (texto + ícono de luna/reloj), consistente con el resto de la UI actual (Material Design 3, sin assets de imagen todavía — eso es la pieza de "tema visual", fuera de este spec)
 
 ### `GameOverScreen` (modificación)
 - Muestra "Fallaste en la Noche {night}" además de las estadísticas existentes
-- Botón "Reintentar" llama `GameProvider.resetNight()` en vez de `reset()`, y navega de vuelta a `GameScreen` en vez de `SplashScreen` (no hace falta reconectar, la sesión de conexión sigue activa)
+- Botón "Reintentar" llama `GameProvider.reiniciarNoche()` en vez de `reset()`, y navega de vuelta a `GameScreen` en vez de `SplashScreen` (no hace falta reconectar, la sesión de conexión sigue activa)
 
-### Nueva pantalla: `VictoryScreen`
-Se muestra cuando `GameProvider.isFinalVictory == true` (completó Noche 5). Contenido mínimo: mensaje de victoria, estadísticas finales acumuladas, botón "Jugar de nuevo" que hace `reset()` duro y vuelve a `SplashScreen`.
+### Nueva pantalla: `PantallaVictoria`
+Se muestra cuando `GameProvider.esVictoriaFinal == true` (completó Noche 5). Contenido mínimo: mensaje de victoria, estadísticas finales acumuladas, botón "Jugar de nuevo" que hace `reset()` duro y vuelve a `SplashScreen`.
 
 ## Flujo completo
 
@@ -88,10 +88,10 @@ SplashScreen (conecta)
   → recibe night_status periódicamente, reloj avanza
   → si vida llega a 0 antes de las 6:00 AM:
       → GameOverScreen ("Fallaste en la Noche N")
-      → Reintentar → resetNight() → vuelve a GameScreen, MISMA noche, reloj en 12:00 AM
+      → Reintentar → reiniciarNoche() → vuelve a GameScreen, MISMA noche, reloj en 12:00 AM
   → si el reloj llega a 6:00 AM (sobrevive):
-      → si currentNight < 5: servidor manda night_status con night+1 → GameScreen sigue mostrando, ahora Noche N+1
-      → si currentNight == 5: servidor manda game_over con result: "final_victory" → VictoryScreen
+      → si nocheActual < 5: servidor manda night_status con night+1 → GameScreen sigue mostrando, ahora Noche N+1
+      → si nocheActual == 5: servidor manda game_over con result: "final_victory" → PantallaVictoria
 ```
 
 ## MockServerService (simulación)
@@ -107,8 +107,8 @@ SplashScreen (conecta)
 ## Testing
 
 - `dart analyze` limpio
-- Verificación manual: correr en Linux desktop, confirmar que `NightClockBar` muestra "Noche 1/5" y el reloj avanza desde 12:00 AM
-- Acortar temporalmente la duración de noche en el mock (de 360s a algo más corto, ej. 20s) para poder verificar manualmente el ciclo completo de: avance de noche → Noche 5 → VictoryScreen, y por separado: fallo de vida → Reintentar → misma noche. Revertir el valor antes de commitear (mismo patrón ya usado para verificar el esqueleto original)
+- Verificación manual: correr en Linux desktop, confirmar que `BarraRelojDeNoche` muestra "Noche 1/5" y el reloj avanza desde 12:00 AM
+- Acortar temporalmente la duración de noche en el mock (de 360s a algo más corto, ej. 20s) para poder verificar manualmente el ciclo completo de: avance de noche → Noche 5 → PantallaVictoria, y por separado: fallo de vida → Reintentar → misma noche. Revertir el valor antes de commitear (mismo patrón ya usado para verificar el esqueleto original)
 - Sin unit tests automatizados (consistente con el resto del proyecto en esta fase)
 
 ## Notas de coordinación con el equipo

@@ -99,6 +99,7 @@ class GameProvider extends ChangeNotifier {
     session.currentTask = null;
     lastAttack = null;
     isGameOver = false;
+    ultimaNocheDeGameOver = null;
     notifyListeners();
   }
 }
