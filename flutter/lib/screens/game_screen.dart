@@ -7,6 +7,7 @@ import '../providers/connection_provider.dart';
 import '../providers/game_provider.dart';
 import '../widgets/health_bar.dart';
 import '../widgets/status_bar.dart';
+import '../widgets/barra_reloj_de_noche.dart';
 import '../widgets/placeholder_game_widget.dart';
 import '../widgets/cable_game_widget.dart';
 import '../widgets/sequence_game_widget.dart';
@@ -62,6 +63,11 @@ class _GameScreenState extends State<GameScreen> {
         child: Column(
           children: [
             HealthBar(health: game.session.health),
+            const SizedBox(height: 8),
+            BarraRelojDeNoche(
+              nocheActual: game.session.nocheActual,
+              horaEnJuego: game.session.horaEnJuego,
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: game.session.currentTask == null
