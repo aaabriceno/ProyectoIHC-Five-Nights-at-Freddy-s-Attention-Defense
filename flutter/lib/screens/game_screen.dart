@@ -9,6 +9,9 @@ import '../widgets/health_bar.dart';
 import '../widgets/status_bar.dart';
 import '../widgets/placeholder_game_widget.dart';
 import '../widgets/cable_game_widget.dart';
+import '../widgets/sequence_game_widget.dart';
+import '../widgets/dial_game_widget.dart';
+import '../widgets/rhythm_game_widget.dart';
 import 'game_over_screen.dart';
 
 class GameScreen extends StatefulWidget {
@@ -81,6 +84,43 @@ class _GameScreenState extends State<GameScreen> {
               success: success,
               timeTaken: task.duration.toDouble(),
               taskData: {'connections': connections},
+            );
+          },
+        );
+      case 'sequence':
+        return SequenceGameWidget(
+          task: task,
+          onComplete: (exito, secuenciaUsuario, errores) {
+            game.reportTaskCompleted(
+              success: exito,
+              timeTaken: task.duration.toDouble(),
+              taskData: {
+                'correct_order': task.params['targets'] ?? [],
+                'user_sequence': secuenciaUsuario,
+                'errors': errores,
+              },
+            );
+          },
+        );
+      case 'dials':
+        return DialGameWidget(
+          task: task,
+          onComplete: (exito, diales) {
+            game.reportTaskCompleted(
+              success: exito,
+              timeTaken: task.duration.toDouble(),
+              taskData: {'dials': diales},
+            );
+          },
+        );
+      case 'rhythm':
+        return RhythmGameWidget(
+          task: task,
+          onComplete: (exito, datosRitmo) {
+            game.reportTaskCompleted(
+              success: exito,
+              timeTaken: task.duration.toDouble(),
+              taskData: {'rhythm_data': datosRitmo},
             );
           },
         );
