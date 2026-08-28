@@ -23,6 +23,16 @@ class ConnectionProvider extends ChangeNotifier {
   void Function(Map<String, dynamic>) get sender =>
       ServerConfig.useMock ? _mockService.sendTaskCompleted : _wsService.sendMessage;
 
+  /// Reinicia el reloj de la noche actual (misma noche, tiempo en 0) sin
+  /// desconectar. Se usa cuando el jugador falla y reintenta la misma
+  /// noche. No hace nada contra el backend real hasta que implemente su
+  /// propia lógica de reinicio de noche (ver spec de protocolo propuesto).
+  void reiniciarNoche() {
+    if (ServerConfig.useMock) {
+      _mockService.reiniciarRelojDeNoche();
+    }
+  }
+
   void connect() {
     _state = ConnectionState.connecting;
     notifyListeners();
