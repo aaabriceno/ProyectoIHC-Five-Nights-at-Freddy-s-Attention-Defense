@@ -8,6 +8,8 @@ class GameProvider extends ChangeNotifier {
   GameSession session = GameSession(playerId: 'player_1');
   Attack? lastAttack;
   bool isGameOver = false;
+  bool isFinalVictory = false;
+  int? lastGameOverNight;
 
   /// Set by the screen layer to the active provider's `sender` (see
   /// ConnectionProvider.sender) so this provider can report task results
@@ -25,11 +27,21 @@ class GameProvider extends ChangeNotifier {
         lastAttack = attack;
         session.health = (session.health - attack.damage).clamp(0, 100);
         if (session.health == 0) {
+          lastGameOverNight = session.currentNight;
           isGameOver = true;
         }
         break;
+      case 'night_status':
+        session.currentNight = message['night'] as int;
+        session.inGameTime = message['in_game_time'] as String;
+        break;
       case 'game_over':
-        isGameOver = true;
+        lastGameOverNight = (message['night'] as int?) ?? session.currentNight;
+        if (message['result'] == 'final_victory') {
+          isFinalVictory = true;
+        } else {
+          isGameOver = true;
+        }
         break;
       default:
         appLogger.w('Unhandled message type: $type');
@@ -69,6 +81,21 @@ class GameProvider extends ChangeNotifier {
 
   void reset() {
     session = GameSession(playerId: session.playerId);
+    lastAttack = null;
+    isGameOver = false;
+    isFinalVictory = false;
+    lastGameOverNight = null;
+    notifyListeners();
+  }
+
+  /// Resets health/tasks/current task for a retry of the SAME night,
+  /// keeping `currentNight` and `inGameTime` untouched. Used when the
+  /// player fails (health reaches 0) mid-night.
+  void resetNight() {
+    session.health = 100;
+    session.tasksCompleted = 0;
+    session.tasksFailed = 0;
+    session.currentTask = null;
     lastAttack = null;
     isGameOver = false;
     notifyListeners();

@@ -10,6 +10,8 @@ class GameSession {
   DateTime? endTime;
   bool isConnected;
   Task? currentTask;
+  int currentNight;
+  String inGameTime;
 
   GameSession({
     required this.playerId,
@@ -21,5 +23,7 @@ class GameSession {
     this.endTime,
     this.isConnected = false,
     this.currentTask,
+    this.currentNight = 1,
+    this.inGameTime = '12:00 AM',
   });
 }
