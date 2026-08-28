@@ -1,15 +1,16 @@
 import 'dart:async';
 import '../utils/logger.dart';
 
-/// Simulates backend behavior (new_task / attack / night_status events) so
-/// the tablet UI can be developed and tested before the real Python backend
-/// exists. `night_status` is a PROPOSED protocol addition (see
-/// docs/superpowers/specs/2026-08-28-sistema-de-noches-design.md) — the real
-/// backend does not send this yet.
+/// Simula el comportamiento del backend (eventos new_task / attack /
+/// night_status) para poder desarrollar y probar la app tablet antes de
+/// que exista el backend real en Python. `night_status` es una PROPUESTA
+/// de extensión del protocolo (ver
+/// docs/superpowers/specs/2026-08-28-sistema-de-noches-design.md) — el
+/// backend real todavía no manda esto.
 class MockServerService {
   Timer? _taskTimer;
   Timer? _attackTimer;
-  Timer? _nightClockTimer;
+  Timer? _temporizadorRelojDeNoche;
   int _taskCounter = 0;
   final StreamController<Map<String, dynamic>> _messageController =
       StreamController<Map<String, dynamic>>.broadcast();
@@ -19,13 +20,12 @@ class MockServerService {
   static const List<String> _taskTypes = ['cables', 'dials', 'sequence', 'rhythm'];
 
   // Duración de una noche en segundos reales. 360 = 6 minutos (spec real).
-  // Se puede acortar temporalmente para pruebas manuales rápidas — ver
-  // Task 4 de este plan, sección de verificación.
-  static const int secondsPerNight = 360;
-  static const int totalNights = 5;
+  // Se puede acortar temporalmente para pruebas manuales rápidas.
+  static const int segundosPorNoche = 360;
+  static const int totalNoches = 5;
 
-  int _currentNight = 1;
-  int _secondsElapsedThisNight = 0;
+  int _nocheActual = 1;
+  int _segundosTranscurridosEstaNoche = 0;
 
   void start() {
     appLogger.i('MockServerService started');
@@ -37,8 +37,8 @@ class MockServerService {
     _attackTimer = Timer.periodic(const Duration(seconds: 25), (_) {
       _emitAttack();
     });
-    _nightClockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _tickNightClock();
+    _temporizadorRelojDeNoche = Timer.periodic(const Duration(seconds: 1), (_) {
+      _avanzarRelojDeNoche();
     });
   }
 
@@ -69,73 +69,74 @@ class MockServerService {
     });
   }
 
-  void _tickNightClock() {
-    _secondsElapsedThisNight++;
+  void _avanzarRelojDeNoche() {
+    _segundosTranscurridosEstaNoche++;
     _messageController.add({
       'type': 'night_status',
-      'night': _currentNight,
-      'in_game_time': _formatInGameTime(_secondsElapsedThisNight),
-      'seconds_elapsed': _secondsElapsedThisNight,
-      'seconds_total': secondsPerNight,
+      'night': _nocheActual,
+      'in_game_time': _formatearHoraEnJuego(_segundosTranscurridosEstaNoche),
+      'seconds_elapsed': _segundosTranscurridosEstaNoche,
+      'seconds_total': segundosPorNoche,
     });
 
-    if (_secondsElapsedThisNight >= secondsPerNight) {
-      if (_currentNight >= totalNights) {
-        _emitFinalVictory();
+    if (_segundosTranscurridosEstaNoche >= segundosPorNoche) {
+      if (_nocheActual >= totalNoches) {
+        _emitirVictoriaFinal();
       } else {
-        _currentNight++;
-        _secondsElapsedThisNight = 0;
+        _nocheActual++;
+        _segundosTranscurridosEstaNoche = 0;
       }
     }
   }
 
-  /// Convierte segundos transcurridos (0..secondsPerNight) a una hora
+  /// Convierte segundos transcurridos (0..segundosPorNoche) a una hora
   /// simulada 12:00 AM -> 6:00 AM, formateada como "H:MM AM".
-  String _formatInGameTime(int secondsElapsed) {
-    final double fraction = secondsElapsed / secondsPerNight;
-    final int totalMinutesSimulated = (fraction * 6 * 60).round();
-    int hour = 12 + (totalMinutesSimulated ~/ 60);
-    final int minute = totalMinutesSimulated % 60;
-    if (hour > 12) hour -= 12;
-    final String minuteStr = minute.toString().padLeft(2, '0');
-    return '$hour:$minuteStr AM';
+  String _formatearHoraEnJuego(int segundosTranscurridos) {
+    final double fraccion = segundosTranscurridos / segundosPorNoche;
+    final int minutosTotalesSimulados = (fraccion * 6 * 60).round();
+    int hora = 12 + (minutosTotalesSimulados ~/ 60);
+    final int minuto = minutosTotalesSimulados % 60;
+    if (hora > 12) hora -= 12;
+    final String minutoStr = minuto.toString().padLeft(2, '0');
+    return '$hora:$minutoStr AM';
   }
 
-  void _emitFinalVictory() {
-    _nightClockTimer?.cancel();
+  void _emitirVictoriaFinal() {
+    _temporizadorRelojDeNoche?.cancel();
     _attackTimer?.cancel();
     _taskTimer?.cancel();
     _messageController.add({
       'type': 'game_over',
       'result': 'final_victory',
-      'night': totalNights,
+      'night': totalNoches,
       'final_stats': <String, dynamic>{},
       'timestamp': DateTime.now().millisecondsSinceEpoch,
     });
   }
 
-  /// Called by GameProvider when the placeholder widget reports completion,
-  /// so the mock can advance to the next task like a real server would.
+  /// Llamado por GameProvider cuando el widget de tarea reporta que
+  /// terminó, para que el mock avance a la siguiente tarea como lo
+  /// haría un servidor real.
   void sendTaskCompleted(Map<String, dynamic> data) {
     appLogger.i('Mock received task_completed: $data');
     _taskTimer?.cancel();
     _taskTimer = Timer(const Duration(seconds: 1), _emitNextTask);
   }
 
-  /// Reinicia el reloj de la noche actual (sin cambiar `_currentNight`),
+  /// Reinicia el reloj de la noche actual (sin cambiar `_nocheActual`),
   /// para cuando el jugador reintenta tras fallar. No reinicia el timer
   /// de ataques/tareas, que siguen corriendo independientemente.
-  void resetNightClock() {
-    _secondsElapsedThisNight = 0;
+  void reiniciarRelojDeNoche() {
+    _segundosTranscurridosEstaNoche = 0;
   }
 
   void stop() {
     _taskTimer?.cancel();
     _attackTimer?.cancel();
-    _nightClockTimer?.cancel();
+    _temporizadorRelojDeNoche?.cancel();
     _taskCounter = 0;
-    _currentNight = 1;
-    _secondsElapsedThisNight = 0;
+    _nocheActual = 1;
+    _segundosTranscurridosEstaNoche = 0;
   }
 
   void dispose() {

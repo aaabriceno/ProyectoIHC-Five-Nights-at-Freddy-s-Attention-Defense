@@ -8,12 +8,13 @@ class GameProvider extends ChangeNotifier {
   GameSession session = GameSession(playerId: 'player_1');
   Attack? lastAttack;
   bool isGameOver = false;
-  bool isFinalVictory = false;
-  int? lastGameOverNight;
+  bool esVictoriaFinal = false;
+  int? ultimaNocheDeGameOver;
 
-  /// Set by the screen layer to the active provider's `sender` (see
-  /// ConnectionProvider.sender) so this provider can report task results
-  /// without depending on ConnectionProvider directly.
+  /// Asignado por la capa de pantallas al `sender` del provider activo
+  /// (ver ConnectionProvider.sender) para que este provider pueda
+  /// reportar resultados de tareas sin depender directamente de
+  /// ConnectionProvider.
   void Function(Map<String, dynamic>)? sendToServer;
 
   void handleMessage(Map<String, dynamic> message) {
@@ -27,18 +28,18 @@ class GameProvider extends ChangeNotifier {
         lastAttack = attack;
         session.health = (session.health - attack.damage).clamp(0, 100);
         if (session.health == 0) {
-          lastGameOverNight = session.currentNight;
+          ultimaNocheDeGameOver = session.nocheActual;
           isGameOver = true;
         }
         break;
       case 'night_status':
-        session.currentNight = message['night'] as int;
-        session.inGameTime = message['in_game_time'] as String;
+        session.nocheActual = message['night'] as int;
+        session.horaEnJuego = message['in_game_time'] as String;
         break;
       case 'game_over':
-        lastGameOverNight = (message['night'] as int?) ?? session.currentNight;
+        ultimaNocheDeGameOver = (message['night'] as int?) ?? session.nocheActual;
         if (message['result'] == 'final_victory') {
-          isFinalVictory = true;
+          esVictoriaFinal = true;
         } else {
           isGameOver = true;
         }
@@ -83,15 +84,15 @@ class GameProvider extends ChangeNotifier {
     session = GameSession(playerId: session.playerId);
     lastAttack = null;
     isGameOver = false;
-    isFinalVictory = false;
-    lastGameOverNight = null;
+    esVictoriaFinal = false;
+    ultimaNocheDeGameOver = null;
     notifyListeners();
   }
 
-  /// Resets health/tasks/current task for a retry of the SAME night,
-  /// keeping `currentNight` and `inGameTime` untouched. Used when the
-  /// player fails (health reaches 0) mid-night.
-  void resetNight() {
+  /// Reinicia vida/tareas/tarea actual para reintentar la MISMA noche,
+  /// sin tocar `nocheActual` ni `horaEnJuego`. Se usa cuando el jugador
+  /// falla (la vida llega a 0) a mitad de la noche.
+  void reiniciarNoche() {
     session.health = 100;
     session.tasksCompleted = 0;
     session.tasksFailed = 0;
