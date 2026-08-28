@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/game_provider.dart';
 import '../providers/connection_provider.dart';
-import 'splash_screen.dart';
+import 'game_screen.dart';
 
 class GameOverScreen extends StatelessWidget {
   const GameOverScreen({super.key});
@@ -11,6 +11,7 @@ class GameOverScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final GameProvider game = context.watch<GameProvider>();
     final session = game.session;
+    final int? noche = game.ultimaNocheDeGameOver;
 
     return Scaffold(
       body: Center(
@@ -19,6 +20,8 @@ class GameOverScreen extends StatelessWidget {
           children: [
             const Text('JUEGO TERMINADO',
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            if (noche != null) Text('Fallaste en la Noche $noche'),
             const SizedBox(height: 16),
             Text('Tareas completadas: ${session.tasksCompleted}'),
             Text('Tareas fallidas: ${session.tasksFailed}'),
@@ -26,10 +29,10 @@ class GameOverScreen extends StatelessWidget {
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () {
-                context.read<GameProvider>().reset();
-                context.read<ConnectionProvider>().disconnect();
+                context.read<GameProvider>().reiniciarNoche();
+                context.read<ConnectionProvider>().reiniciarNoche();
                 Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute<void>(builder: (_) => const SplashScreen()),
+                  MaterialPageRoute<void>(builder: (_) => const GameScreen()),
                   (route) => false,
                 );
               },
