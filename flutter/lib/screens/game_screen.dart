@@ -14,6 +14,7 @@ import '../widgets/sequence_game_widget.dart';
 import '../widgets/dial_game_widget.dart';
 import '../widgets/rhythm_game_widget.dart';
 import 'game_over_screen.dart';
+import 'pantalla_victoria.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -43,7 +44,13 @@ class _GameScreenState extends State<GameScreen> {
       _messageSubscription = connection.messages.listen(game.handleMessage);
     }
 
-    if (game.isGameOver) {
+    if (game.esVictoriaFinal) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute<void>(builder: (_) => const PantallaVictoria()),
+        );
+      });
+    } else if (game.isGameOver) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute<void>(builder: (_) => const GameOverScreen()),
